@@ -2,7 +2,7 @@
 #include <winternl.h>
 
 #pragma comment(linker,"/ENTRY:entry")
-#define DEBUG 1     // 0 disable, 1 enable
+#define DEBUG 0    // 0 disable, 1 enable
 #define HASHALGO HashStringDjb2
 constexpr auto CACHE = 10;
 
