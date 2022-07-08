@@ -2,9 +2,9 @@
 #include <winternl.h>
 
 #pragma comment(linker,"/ENTRY:entry")
-#define DEBUG 0    // 0 disable, 1 enable
-#define HASHALGO HashStringDjb2
-constexpr auto CACHE = 10;
+#define DEBUG 0                         // 0 disable, 1 enable
+#define HASHALGO HashStringDjb2         // specify algorithm here
+constexpr auto CACHE = 10;              // specify size of CACHE array
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///                                                     FUNCTION DECLRATIONS                                                    ///
