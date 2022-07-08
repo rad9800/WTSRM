@@ -2,7 +2,7 @@
 #include <winternl.h>
 
 #pragma comment(linker,"/ENTRY:entry")
-#define DEBUG 0     // 0 disable, 1 enable
+#define DEBUG 1     // 0 disable, 1 enable
 #define HASHALGO HashStringDjb2
 constexpr auto CACHE = 10;
 
@@ -160,19 +160,20 @@ struct obfuscator {
     
     constexpr obfuscator(const T* data) {
         for (unsigned int i = 0; i < N; i++) {
-            m_data[i] = (data[i] ^ (i + KEY));
+            m_data[i] = (data[i] ^ (KEY));
         }
     }
 
     void deobfuscate(T* des) const {
         int i = 0;
         do {
-            des[i] = (m_data[i] ^ (i + KEY));
+            des[i] = (m_data[i] ^ (KEY));
             i++;
         } while (des[i - 1]);
     }
 };
 
+// Use these sparingly! They can often raise the entropy
 #define OBFW(str)\
     []() -> wchar_t* {\
         constexpr auto size = sizeof(str)/sizeof(str[0]);\
@@ -297,7 +298,7 @@ int entry()
                             &dw
                         );
 
-                        PRINT(OBFW(L"[ ] Unhooked %s from \\KnownDlls\\%s \n"), basename->Buffer, basename->Buffer);
+                        PRINT(L"[ ] Unhooked %s from \\KnownDlls\\%s \n", basename->Buffer, basename->Buffer);
                     }
                 }
             }
@@ -352,10 +353,10 @@ void CheckCommonlyHooked()
     for (int i = 0; i < 4; i++) {
         hashes[i].addr = GetProcAddrH(hashNTDLL, hashes[i].Hash);
         if (*(ULONG*)hashes[i].addr != 0xb8d18b4c) {
-            PRINT(OBFW(L"[!] Hooked Function at 0x%p\n"), hashes[i].addr);
+            PRINT(L"[!] Hooked Function at 0x%p\n", hashes[i].addr);
         }
         else {
-            PRINT(OBFW(L"[-] Function Not Hooked at 0x%p\n"), hashes[i].addr);
+            PRINT(L"[-] Function Not Hooked at 0x%p\n", hashes[i].addr);
         }
     }
 }
