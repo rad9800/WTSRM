@@ -1,4 +1,4 @@
-WTSRM
+WTSRM - Writing Tiny Small Reliable Malware demo repository
 
 - Unhooks all Windows Dlls with \KnownDlls\
 - No CRT dependencies
