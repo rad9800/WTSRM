@@ -1,4 +1,4 @@
-WTSRM - Writing Tiny Small Reliable Malware demo repository
+WTSRM - Writing Tiny Small Reliable Malware demo repository for my corresponding talk.
 
 - Unhooks all Windows Dlls with \KnownDlls\
 - No CRT dependencies
@@ -7,3 +7,4 @@ WTSRM - Writing Tiny Small Reliable Malware demo repository
 - Random string encryption key
 - API hashing
 - Hook detection
+- Walks around hooks for initial unhooking on ntdll
