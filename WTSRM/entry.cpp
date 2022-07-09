@@ -267,7 +267,7 @@ int entry()
                     (PIMAGE_SECTION_HEADER)((DWORD_PTR)IMAGE_FIRST_SECTION(nt) +
                         ((DWORD_PTR)IMAGE_SIZEOF_SECTION_HEADER * i));
 
-                // strcmp will not inlined or optimized even with /O2
+
                 // thanks to modexp for the idea
                 if ((*(ULONG*)section->Name | 0x20202020) == 'xet.') {
                     ULONG dw;
