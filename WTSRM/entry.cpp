@@ -2,24 +2,33 @@
 #include <winternl.h>
 
 #pragma comment(linker,"/ENTRY:entry")
-#define DEBUG 0                         // 0 disable, 1 enable
+#define _DEBUG 0                         // 0 disable, 1 enable
 #define HASHALGO HashStringDjb2         // specify algorithm here
 constexpr auto CACHE = 10;              // specify size of CACHE array
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////r//////////////////////////////////////
 ///                                                     FUNCTION DECLRATIONS                                                    ///
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #pragma region commonmacros 
 
 #define NtCurrentProcess() ( (HANDLE)(LONG_PTR) -1 )  
-#define RVA2VA(Type, Base, Rva) (Type)((ULONG_PTR) Base + Rva)      // Credit to modexp
-#define SWAP(Type, x, y) do { Type SWAP = x; x = y; y = SWAP; } while (0)
+                                                                // Credit to modexp for the idea
+template <typename Type>                                        // @JonasLyk said constexpr func -> template -> macro
+inline Type RVA2VA(LPVOID Base, LONG Rva) {
+    return (Type)((ULONG_PTR)Base + Rva);
+}
+template <typename T>
+void SWAP(T &x, T  &y) {                                        // Inlined on any /O flag by compiler D:
+    T t = x;
+    x = y;                                  
+    y = t;
+}
 
 #define TOKENIZE( x ) #x
 #define CONCAT( X, Y ) X##Y
 
-#if DEBUG == 0
+#if _DEBUG == 0
 #define PRINT( STR, ... )
 #else
 #define PRINT( STR, ... )                                                                   \
@@ -36,6 +45,7 @@ constexpr auto CACHE = 10;              // specify size of CACHE array
 #pragma endregion 
 
 #pragma region helpers
+// Careful about buffer overflow
 wchar_t* _strcpy(wchar_t* dest, const wchar_t* src);
 
 wchar_t* _strcat(wchar_t* dest, const wchar_t* src);
@@ -251,7 +261,7 @@ int entry()
         UNICODE_STRING* basename = (UNICODE_STRING*)((PBYTE)fullname + sizeof(UNICODE_STRING));
 
         LPVOID addr = RetrieveKnownDll(basename->Buffer);
-        UINT hash = 0;
+        UINT uhash = 0;
         char  name[64];
         if (basename->Length < sizeof(name) - 1) {
             int i = 0;
@@ -261,12 +271,12 @@ int entry()
                 i++;
             }
             name[i] = 0;
-            hash = HASHALGO(name);
-            if (hash == hashNTDLL) {
+            uhash = HASHALGO(name);
+            if (uhash == hashNTDLL) {
                 ntdll = addr;                                       // ntdll holds \\KnownDlls\\ntdll.dll
                 if (entry->DllBase == ModuleHashes[0].addr) {
-                    SWAP(LPVOID, ntdll, ModuleHashes[0].addr);
-                    PRINT(L"Swapped ntdll: 0x%p with ModuleHashes: 0x%p\n", ntdll, ModuleHashes[0].addr);
+                    SWAP<LPVOID>(ntdll, ModuleHashes[0].addr);
+                    PRINT(L"\nSwapped ntdll: 0x%p with ModuleHashes: 0x%p\n\n", ntdll, ModuleHashes[0].addr);
                     hashPointer = 0;
                 }
             }
@@ -277,7 +287,7 @@ int entry()
             HMODULE module = (HMODULE)entry->DllBase;
 
             PIMAGE_DOS_HEADER dos = (PIMAGE_DOS_HEADER)entry->DllBase;
-            PIMAGE_NT_HEADERS nt = RVA2VA(PIMAGE_NT_HEADERS, entry->DllBase, dos->e_lfanew);
+            PIMAGE_NT_HEADERS nt = RVA2VA<PIMAGE_NT_HEADERS>(entry->DllBase, dos->e_lfanew);
 
             // https://www.ired.team/offensive-security/defense-evasion/how-to-unhook-a-dll-using-c++
             for (int i = 0; i < nt->FileHeader.NumberOfSections; i++) {
@@ -289,7 +299,7 @@ int entry()
                 // thanks to modexp for the idea
                 if ((*(ULONG*)section->Name | 0x20202020) == 'xet.') {
                     ULONG dw;
-                    PVOID base = RVA2VA(LPVOID, module, section->VirtualAddress);
+                    PVOID base = RVA2VA<LPVOID>(module, section->VirtualAddress);
                     ULONG size = section->Misc.VirtualSize;
 
                     // It's not a trivial task to make the DLL RW only especially in the case of NTDLL as we'll be using 
@@ -303,8 +313,8 @@ int entry()
                         // Consider storing the hooked .text sections encrypted in an allocated buffer and restoring when
                         //  you are done.
                         _memcpy(
-                            RVA2VA(LPVOID, module, section->VirtualAddress),
-                            RVA2VA(LPVOID, addr, section->VirtualAddress),
+                            RVA2VA<LPVOID>(module, section->VirtualAddress),
+                            RVA2VA<LPVOID>(addr, section->VirtualAddress),
                             section->Misc.VirtualSize
                         );
 
@@ -325,11 +335,10 @@ int entry()
             if (basename->Length < sizeof(name) - 1) {
 
             }
-
-            if (hash == hashNTDLL) {
+            if (uhash == hashNTDLL) {
                 if (addr == ModuleHashes[0].addr) {
-                    SWAP(LPVOID, ntdll, ModuleHashes[0].addr);
-                    PRINT(L"Swapped ntdll: 0x%p with ModuleHashes: 0x%p\n", ntdll, ModuleHashes[0].addr);
+                    SWAP<LPVOID>(ntdll, ModuleHashes[0].addr);
+                    PRINT(L"\nSwapped ntdll: 0x%p with ModuleHashes: 0x%p\n\n", ntdll, ModuleHashes[0].addr);
                     hashPointer = 0;            // We don't want it to point towards our \\KnownDlls\\ntdll.dll looked up functions
                 }
             }
@@ -340,7 +349,7 @@ int entry()
         next = next->Flink;
     }
 
-#if DEBUG == 1
+#if _DEBUG == 1
     CheckCommonlyHooked();
 #endif
 
@@ -542,19 +551,19 @@ void* GetProcAddrH(UINT moduleHash, UINT funcHash)
     }
 
     PIMAGE_DOS_HEADER dos = (PIMAGE_DOS_HEADER)base;
-    PIMAGE_NT_HEADERS nt = RVA2VA(PIMAGE_NT_HEADERS, base, dos->e_lfanew);
+    PIMAGE_NT_HEADERS nt = RVA2VA<PIMAGE_NT_HEADERS>(base, dos->e_lfanew);
 
-    PIMAGE_EXPORT_DIRECTORY exports = RVA2VA(PIMAGE_EXPORT_DIRECTORY, base, nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
+    PIMAGE_EXPORT_DIRECTORY exports = RVA2VA<PIMAGE_EXPORT_DIRECTORY>(base, nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
     if (exports->AddressOfNames != 0)
     {
-        PWORD ordinals = RVA2VA(PWORD, base, exports->AddressOfNameOrdinals);
-        PDWORD names = RVA2VA(PDWORD, base, exports->AddressOfNames);
-        PDWORD functions = RVA2VA(PDWORD, base, exports->AddressOfFunctions);
+        PWORD ordinals = RVA2VA<PWORD>(base, exports->AddressOfNameOrdinals);
+        PDWORD names = RVA2VA<PDWORD>(base, exports->AddressOfNames);
+        PDWORD functions = RVA2VA<PDWORD>(base, exports->AddressOfFunctions);
 
         for (DWORD i = 0; i < exports->NumberOfNames; i++) {
-            LPSTR name = RVA2VA(LPSTR, base, names[i]);
+            LPSTR name = RVA2VA<LPSTR>(base, names[i]);
             if (HASHALGO(name) == funcHash) {
-                PBYTE function = RVA2VA(PBYTE, base, functions[ordinals[i]]);
+                PBYTE function = RVA2VA<PBYTE>(base, functions[ordinals[i]]);
                 
                 // Cache the result in a circular array
                 HashCache[hashPointer % CACHE].addr = function;
