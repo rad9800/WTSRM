@@ -40,8 +40,6 @@ wchar_t* _strcpy(wchar_t* dest, const wchar_t* src);
 
 wchar_t* _strcat(wchar_t* dest, const wchar_t* src);
 
-inline int _strcmp(const wchar_t* s1, const wchar_t* s2);
-
 void _memcpy(void* dst, const void* src, SIZE_T count);
 
 __forceinline char upper(char c);
@@ -236,7 +234,7 @@ USHORT hashPointer;
 */
 int entry()
 {
-    
+
     PPEB peb = NtCurrentTeb()->ProcessEnvironmentBlock;
     LIST_ENTRY* head = &peb->Ldr->InMemoryOrderModuleList;
     LIST_ENTRY* next = head->Flink;
@@ -253,13 +251,24 @@ int entry()
         UNICODE_STRING* basename = (UNICODE_STRING*)((PBYTE)fullname + sizeof(UNICODE_STRING));
 
         LPVOID addr = RetrieveKnownDll(basename->Buffer);
-        
-        if (_strcmp(basename->Buffer, L"ntdll.dll") == 0) {
-            ntdll = addr;                                       // ntdll holds \\KnownDlls\\ntdll.dll
-            if (entry->DllBase == ModuleHashes[0].addr) {
-                SWAP(LPVOID, ntdll, ModuleHashes[0].addr);
-                PRINT(L"Swapped ntdll: 0x%p with ModuleHashes: 0x%p\n", ntdll, ModuleHashes[0].addr);
-                hashPointer = 0;
+        UINT hash = 0;
+        char  name[64];
+        if (basename->Length < sizeof(name) - 1) {
+            int i = 0;
+            while (basename->Buffer[i] && i < sizeof(name) - 1)
+            {
+                name[i] = upper((char)basename->Buffer[i]);	// can never be sure so uppercase
+                i++;
+            }
+            name[i] = 0;
+            hash = HASHALGO(name);
+            if (hash == hashNTDLL) {
+                ntdll = addr;                                       // ntdll holds \\KnownDlls\\ntdll.dll
+                if (entry->DllBase == ModuleHashes[0].addr) {
+                    SWAP(LPVOID, ntdll, ModuleHashes[0].addr);
+                    PRINT(L"Swapped ntdll: 0x%p with ModuleHashes: 0x%p\n", ntdll, ModuleHashes[0].addr);
+                    hashPointer = 0;
+                }
             }
         }
 
@@ -313,7 +322,11 @@ int entry()
                 }
             }
 
-            if (_strcmp(basename->Buffer, L"ntdll.dll") == 0) {
+            if (basename->Length < sizeof(name) - 1) {
+
+            }
+
+            if (hash == hashNTDLL) {
                 if (addr == ModuleHashes[0].addr) {
                     SWAP(LPVOID, ntdll, ModuleHashes[0].addr);
                     PRINT(L"Swapped ntdll: 0x%p with ModuleHashes: 0x%p\n", ntdll, ModuleHashes[0].addr);
@@ -333,6 +346,7 @@ int entry()
 
     // Do whatever you want here
     // Define API typedef with hashFunc macro and invoke using API(*)()
+
 
     return 0;
 }
@@ -480,28 +494,6 @@ void _memcpy(void* dst, const void* src, SIZE_T count) {
     }
 }
 
-inline int _strcmp(const wchar_t* s1, const wchar_t* s2)
-{
-    wchar_t	c1, c2;
-
-    if (s1 == s2)
-        return 0;
-
-    if (s1 == 0)
-        return -1;
-
-    if (s2 == 0)
-        return 1;
-
-    do {
-        c1 = *s1;
-        c2 = *s2;
-        s1++;
-        s2++;
-    } while ((c1 != 0) && (c1 == c2));
-
-    return (int)(c1 - c2);
-}
 
 __forceinline char upper(char c)
 {
