@@ -14,6 +14,7 @@ constexpr auto CACHE = 10;              // specify size of CACHE array
 
 #define NtCurrentProcess() ( (HANDLE)(LONG_PTR) -1 )  
 #define RVA2VA(Type, Base, Rva) (Type)((ULONG_PTR) Base + Rva)      // Credit to modexp
+#define SWAP(Type, x, y) do { Type SWAP = x; x = y; y = SWAP; } while (0)
 
 #define TOKENIZE( x ) #x
 #define CONCAT( X, Y ) X##Y
@@ -38,6 +39,8 @@ constexpr auto CACHE = 10;              // specify size of CACHE array
 wchar_t* _strcpy(wchar_t* dest, const wchar_t* src);
 
 wchar_t* _strcat(wchar_t* dest, const wchar_t* src);
+
+inline int _strcmp(const wchar_t* s1, const wchar_t* s2);
 
 void _memcpy(void* dst, const void* src, SIZE_T count);
 
@@ -237,14 +240,10 @@ int entry()
     PPEB peb = NtCurrentTeb()->ProcessEnvironmentBlock;
     LIST_ENTRY* head = &peb->Ldr->InMemoryOrderModuleList;
     LIST_ENTRY* next = head->Flink;
-    
+    LPVOID ntdll = NULL;
+
     // Calling as requested by InitModules contest
     InitModules(head);
-
-#if DEBUG == 1
-    CheckCommonlyHooked();
-#endif 
-
 
 
     while (next != head)
@@ -254,6 +253,16 @@ int entry()
         UNICODE_STRING* basename = (UNICODE_STRING*)((PBYTE)fullname + sizeof(UNICODE_STRING));
 
         LPVOID addr = RetrieveKnownDll(basename->Buffer);
+        
+        if (_strcmp(basename->Buffer, L"ntdll.dll") == 0) {
+            ntdll = addr;                                       // ntdll holds \\KnownDlls\\ntdll.dll
+            if (entry->DllBase == ModuleHashes[0].addr) {
+                SWAP(LPVOID, ntdll, ModuleHashes[0].addr);
+                PRINT(L"Swapped ntdll: 0x%p with ModuleHashes: 0x%p\n", ntdll, ModuleHashes[0].addr);
+                hashPointer = 0;
+            }
+        }
+
         if (addr)
         {
             HMODULE module = (HMODULE)entry->DllBase;
@@ -278,6 +287,7 @@ int entry()
                     // various NT functions. PAGE_EXECUTE_READWRITE is a potential IOC.
                     // I leave that as a task to the reader to get around this.
                     // It is also worth nothing NtProtectVirtualMemory could be hooked.
+                    PRINT(L"NtProtectVirtualMemory: 0x%p Module: 0x%p\n", GetProcAddrH(hashNTDLL, hashNtProtectVirtualMemory), ModuleHashes[0].addr)
                     if (NT_SUCCESS(API(NTDLL,NtProtectVirtualMemory)(NtCurrentProcess(), &base, &size, PAGE_EXECUTE_READWRITE, &dw))) {
 
                         // Replacing all the DLLs with an unhooked version is a potential IOC if EDRs scan for unhooked DLLs
@@ -302,6 +312,15 @@ int entry()
                     }
                 }
             }
+
+            if (_strcmp(basename->Buffer, L"ntdll.dll") == 0) {
+                if (addr == ModuleHashes[0].addr) {
+                    SWAP(LPVOID, ntdll, ModuleHashes[0].addr);
+                    PRINT(L"Swapped ntdll: 0x%p with ModuleHashes: 0x%p\n", ntdll, ModuleHashes[0].addr);
+                    hashPointer = 0;            // We don't want it to point towards our \\KnownDlls\\ntdll.dll looked up functions
+                }
+            }
+
             // Unmap pointer as required by RetrieveKnownDll
             API(NTDLL,NtUnmapViewOfSection)(NtCurrentProcess(), addr);
         }
@@ -404,7 +423,7 @@ LPVOID RetrieveKnownDll(PWSTR name)
         NULL
     );
 
-    if (!NT_SUCCESS(API(NTDLL,NtOpenSection)(&section, SECTION_MAP_READ, &oa)))
+    if (!NT_SUCCESS(API(NTDLL,NtOpenSection)(&section, SECTION_MAP_READ | SECTION_MAP_EXECUTE, &oa)))
         goto cleanup;
 
     if (!NT_SUCCESS(API(NTDLL,NtMapViewOfSection)(section, NtCurrentProcess(), &addr, 0, 0, NULL, &size, 1, 0, PAGE_READONLY)))
@@ -459,6 +478,29 @@ void _memcpy(void* dst, const void* src, SIZE_T count) {
     for (volatile int i = 0; i < count; i++) {
         ((BYTE*)dst)[i] = ((BYTE*)src)[i];
     }
+}
+
+inline int _strcmp(const wchar_t* s1, const wchar_t* s2)
+{
+    wchar_t	c1, c2;
+
+    if (s1 == s2)
+        return 0;
+
+    if (s1 == 0)
+        return -1;
+
+    if (s2 == 0)
+        return 1;
+
+    do {
+        c1 = *s1;
+        c2 = *s2;
+        s1++;
+        s2++;
+    } while ((c1 != 0) && (c1 == c2));
+
+    return (int)(c1 - c2);
 }
 
 __forceinline char upper(char c)
