@@ -2,7 +2,7 @@
 #include <winternl.h>
 
 #pragma comment(linker,"/ENTRY:entry")
-#define _DEBUG 0                         // 0 disable, 1 enable
+#define _DEBUG 0                        // 0 disable, 1 enable
 #define HASHALGO HashStringDjb2         // specify algorithm here
 constexpr auto CACHE = 10;              // specify size of CACHE array
 
@@ -253,6 +253,9 @@ int entry()
     // Calling as requested by InitModules contest
     InitModules(head);
 
+#if _DEBUG == 1
+    CheckCommonlyHooked();
+#endif
 
     while (next != head)
     {
@@ -276,7 +279,6 @@ int entry()
                 ntdll = addr;                                       // ntdll holds \\KnownDlls\\ntdll.dll
                 if (entry->DllBase == ModuleHashes[0].addr) {
                     SWAP<LPVOID>(ntdll, ModuleHashes[0].addr);
-                    PRINT(L"\nSwapped ntdll: 0x%p with ModuleHashes: 0x%p\n\n", ntdll, ModuleHashes[0].addr);
                     hashPointer = 0;
                 }
             }
@@ -308,7 +310,6 @@ int entry()
                     // various NT functions. PAGE_EXECUTE_READWRITE is a potential IOC.
                     // I leave that as a task to the reader to get around this.
                     // It is also worth nothing NtProtectVirtualMemory could be hooked.
-                    PRINT(L"NtProtectVirtualMemory: 0x%p Module: 0x%p\n", GetProcAddrH(hashNTDLL, hashNtProtectVirtualMemory), ModuleHashes[0].addr)
                     if (NT_SUCCESS(API(NTDLL,NtProtectVirtualMemory)(NtCurrentProcess(), &base, &size, PAGE_EXECUTE_READWRITE, &dw))) {
 
                         // Replacing all the DLLs with an unhooked version is a potential IOC if EDRs scan for unhooked DLLs
@@ -340,7 +341,6 @@ int entry()
             if (uhash == hashNTDLL) {
                 if (addr == ModuleHashes[0].addr) {
                     SWAP<LPVOID>(ntdll, ModuleHashes[0].addr);
-                    PRINT(L"\nSwapped ntdll: 0x%p with ModuleHashes: 0x%p\n\n", ntdll, ModuleHashes[0].addr);
                     hashPointer = 0;            // We don't want it to point towards our \\KnownDlls\\ntdll.dll looked up functions
                 }
             }
