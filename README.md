@@ -9,4 +9,5 @@ WTSRM - Writing Tiny Small Reliable Malware demo repository for my corresponding
 - Hook detection
 - Walks around hooks for initial unhooking on ntdll
 
+---
 ![Diagram](./wtsrm.png)
