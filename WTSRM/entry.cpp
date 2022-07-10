@@ -297,6 +297,8 @@ int entry()
 
 
                 // thanks to modexp for the idea
+                // | 0x20202020 is lowercasing the text
+                // xet. is .tex in little endian
                 if ((*(ULONG*)section->Name | 0x20202020) == 'xet.') {
                     ULONG dw;
                     PVOID base = RVA2VA<LPVOID>(module, section->VirtualAddress);
