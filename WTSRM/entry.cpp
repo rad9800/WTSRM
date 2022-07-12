@@ -132,7 +132,6 @@ CONCAT( hash,FUNCNAME ) ) )
 dllhash(KERNEL32, L"KERNEL32.DLL")
 dllhash(NTDLL, L"NTDLL.DLL")
 
-
 hashFunc(NtUnmapViewOfSection, NTSTATUS, HANDLE, PVOID);
 hashFunc(NtProtectVirtualMemory, NTSTATUS, HANDLE, PVOID*, PULONG, ULONG, PULONG);
 hashFunc(NtOpenSection, NTSTATUS, HANDLE*, ACCESS_MASK, OBJECT_ATTRIBUTES*);
@@ -278,7 +277,7 @@ int entry()
             if (uhash == hashNTDLL) {
                 ntdll = addr;                                       // ntdll holds \\KnownDlls\\ntdll.dll
                 if (entry->DllBase == ModuleHashes[0].addr) {
-                    SWAP<LPVOID>(ntdll, ModuleHashes[0].addr);
+                    SWAP(ntdll, ModuleHashes[0].addr);
                     hashPointer = 0;
                 }
             }
@@ -340,7 +339,7 @@ int entry()
             }
             if (uhash == hashNTDLL) {
                 if (addr == ModuleHashes[0].addr) {
-                    SWAP<LPVOID>(ntdll, ModuleHashes[0].addr);
+                    SWAP(ntdll, ModuleHashes[0].addr);
                     hashPointer = 0;            // We don't want it to point towards our \\KnownDlls\\ntdll.dll looked up functions
                 }
             }
