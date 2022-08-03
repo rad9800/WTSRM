@@ -1,4 +1,4 @@
-WTSRM - Writing Tiny Small Reliable Malware demo repository for my corresponding talk.
+WTSRM - Writing Tiny Small Reliable Malware demo repository for my corresponding [talk.](https://www.youtube.com/watch?v=TfG9lBYCOq8)
 
 - Unhooks all Windows Dlls with \KnownDlls\
 - No CRT dependencies
