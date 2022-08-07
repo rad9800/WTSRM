@@ -569,7 +569,7 @@ void* GetProcAddrH( UINT moduleHash, UINT funcHash )
                 HashCache[hashPointer % CACHE].addr = function;
                 HashCache[hashPointer % CACHE].Hash = funcHash;
                 hashPointer = (hashPointer + 1) % CACHE;
-
+                PRINT( L"%S found at 0x%p\n", name, function );
                 return function;
             }
         }
